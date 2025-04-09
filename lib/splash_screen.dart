@@ -20,8 +20,13 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+    _initializeAnimations();
+    _startLoading();
+  }
+
+  void _initializeAnimations() {
     _controller = AnimationController(
-      duration: Duration(seconds: 3),
+      duration: Duration(seconds: 2),
       vsync: this,
     );
 
@@ -54,11 +59,13 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _controller.forward();
+  }
 
+  void _startLoading() {
     // Progress değerini güncelle
-    Future.delayed(Duration(milliseconds: 100), () {
+    Future.delayed(Duration(milliseconds: 50), () {
       for (int i = 0; i <= 100; i++) {
-        Future.delayed(Duration(milliseconds: 30), () {
+        Future.delayed(Duration(milliseconds: 20), () {
           if (mounted) {
             setState(() {
               _progressValue = i;
@@ -69,32 +76,36 @@ class _SplashScreenState extends State<SplashScreen>
     });
 
     // Home screen'e geçiş
-    Future.delayed(Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => HomeScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            const begin = Offset(1.0, 0.0);
-            const end = Offset.zero;
-            const curve = Curves.easeInOutCubic;
+    Future.delayed(Duration(seconds: 2), () {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                HomeScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOutCubic;
 
-            var tween =
-                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-            var offsetAnimation = animation.drive(tween);
+              var tween =
+                  Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+              var offsetAnimation = animation.drive(tween);
 
-            return SlideTransition(
-              position: offsetAnimation,
-              child: FadeTransition(
-                opacity: animation,
-                child: child,
-              ),
-            );
-          },
-          transitionDuration: Duration(milliseconds: 1000),
-          reverseTransitionDuration: Duration(milliseconds: 1000),
-        ),
-      );
+              return SlideTransition(
+                position: offsetAnimation,
+                child: FadeTransition(
+                  opacity: animation,
+                  child: child,
+                ),
+              );
+            },
+            transitionDuration: Duration(milliseconds: 800),
+            reverseTransitionDuration: Duration(milliseconds: 800),
+          ),
+        );
+      }
     });
   }
 
@@ -172,6 +183,8 @@ class _SplashScreenState extends State<SplashScreen>
                             "assets/images/chicken.png",
                             width: 100,
                             height: 100,
+                            cacheWidth: 200,
+                            cacheHeight: 200,
                           ),
                         ),
                       ),

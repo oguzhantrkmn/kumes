@@ -12,29 +12,34 @@ class _YemSuScreenState extends State<YemSuScreen> {
   bool _isLoading = true;
   double _yemSeviyesi = 100.0;
   double _suSeviyesi = 100.0;
+  final List<Map<String, dynamic>> _yemGecmisi = [];
+  final List<Map<String, dynamic>> _suGecmisi = [];
 
   @override
   void initState() {
     super.initState();
     _loadValues();
+    _gecmisVerileriniOlustur();
+  }
+
+  void _gecmisVerileriniOlustur() {
+    final now = DateTime.now();
+    for (int i = 0; i < 7; i++) {
+      final date = now.subtract(Duration(days: i));
+      _yemGecmisi.add(
+          {'tarih': '${date.day}.${date.month}.${date.year}', 'deger': 0.0});
+      _suGecmisi.add(
+          {'tarih': '${date.day}.${date.month}.${date.year}', 'deger': 0.0});
+    }
   }
 
   Future<void> _loadValues() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _yemSeviyesi = prefs.getDouble('yem_seviyesi') ?? 100.0;
-      _suSeviyesi = prefs.getDouble('su_seviyesi') ?? 100.0;
+      _yemSeviyesi = 0.0;
+      _suSeviyesi = 0.0;
       _isLoading = false;
     });
-  }
-
-  Future<void> _saveValues() async {
-    setState(() => _isLoading = true);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('yem_seviyesi', _yemSeviyesi);
-    await prefs.setDouble('su_seviyesi', _suSeviyesi);
-    setState(() => _isLoading = false);
-    Navigator.pop(context, true);
   }
 
   @override
@@ -57,15 +62,58 @@ class _YemSuScreenState extends State<YemSuScreen> {
         ),
         body: _isLoading
             ? Center(child: CircularProgressIndicator())
-            : Container(
-                width: double.infinity,
+            : SingleChildScrollView(
                 padding: EdgeInsets.all(16),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Ana Göstergeler
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildSeviyeGostergesi(
+                            context,
+                            localizations.get('yem_seviyesi'),
+                            _yemSeviyesi,
+                            Icons.food_bank,
+                            Colors.orange,
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: _buildSeviyeGostergesi(
+                            context,
+                            localizations.get('su_seviyesi'),
+                            _suSeviyesi,
+                            Icons.water_drop,
+                            Colors.blue,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+
+                    // Yem Geçmişi
+                    _buildGecmisKarti(
+                      context,
+                      localizations.get('yem_seviyesi'),
+                      _yemGecmisi,
+                      Colors.orange,
+                    ),
+                    SizedBox(height: 20),
+
+                    // Su Geçmişi
+                    _buildGecmisKarti(
+                      context,
+                      localizations.get('su_seviyesi'),
+                      _suGecmisi,
+                      Colors.blue,
+                    ),
+                    SizedBox(height: 20),
+
+                    // İstatistikler
                     Container(
-                      padding: EdgeInsets.all(20),
+                      padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(20),
@@ -78,101 +126,33 @@ class _YemSuScreenState extends State<YemSuScreen> {
                         ],
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Yem Kontrolü
-                          Icon(
-                            Icons.food_bank,
-                            size: 60,
-                            color: Colors.orange,
-                          ),
-                          SizedBox(height: 10),
                           Text(
-                            localizations.get('yem_seviyesi'),
+                            'İstatistikler',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                               fontFamily: "Tektur-Regular",
                             ),
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            '${_yemSeviyesi.toStringAsFixed(0)}%',
-                            style: TextStyle(
-                              fontSize: 24,
-                              color: Colors.orange,
-                              fontFamily: "Tektur-Regular",
-                            ),
-                          ),
-                          Slider(
-                            value: _yemSeviyesi,
-                            min: 0,
-                            max: 100,
-                            divisions: 100,
-                            activeColor: Colors.orange,
-                            onChanged: (value) {
-                              setState(() {
-                                _yemSeviyesi = value;
-                              });
-                            },
-                          ),
-                          SizedBox(height: 30),
-                          // Su Kontrolü
-                          Icon(
-                            Icons.water_drop,
-                            size: 60,
-                            color: Colors.blue,
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            localizations.get('su_seviyesi'),
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: "Tektur-Regular",
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          Text(
-                            '${_suSeviyesi.toStringAsFixed(0)}%',
-                            style: TextStyle(
-                              fontSize: 24,
-                              color: Colors.blue,
-                              fontFamily: "Tektur-Regular",
-                            ),
-                          ),
-                          Slider(
-                            value: _suSeviyesi,
-                            min: 0,
-                            max: 100,
-                            divisions: 100,
-                            activeColor: Colors.blue,
-                            onChanged: (value) {
-                              setState(() {
-                                _suSeviyesi = value;
-                              });
-                            },
-                          ),
-                          SizedBox(height: 30),
-                          ElevatedButton(
-                            onPressed: _saveValues,
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 40,
-                                vertical: 15,
+                          SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildIstatistikKarti(
+                                'Ortalama Yem',
+                                '0%',
+                                Icons.food_bank,
+                                Colors.orange,
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
+                              _buildIstatistikKarti(
+                                'Ortalama Su',
+                                '0%',
+                                Icons.water_drop,
+                                Colors.blue,
                               ),
-                              backgroundColor: Colors.blue,
-                            ),
-                            child: Text(
-                              localizations.get('kaydet'),
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontFamily: "Tektur-Regular",
-                                color: Colors.white,
-                              ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
@@ -181,6 +161,133 @@ class _YemSuScreenState extends State<YemSuScreen> {
                 ),
               ),
       ),
+    );
+  }
+
+  Widget _buildSeviyeGostergesi(
+    BuildContext context,
+    String title,
+    double value,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 40, color: color),
+          SizedBox(height: 10),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontFamily: "Tektur-Regular",
+            ),
+          ),
+          SizedBox(height: 5),
+          Text(
+            '${value.toStringAsFixed(0)}%',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+              fontFamily: "Tektur-Regular",
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGecmisKarti(
+    BuildContext context,
+    String title,
+    List<Map<String, dynamic>> gecmis,
+    Color color,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$title Geçmişi',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: "Tektur-Regular",
+            ),
+          ),
+          SizedBox(height: 10),
+          ...gecmis.map((veri) => ListTile(
+                leading: Icon(Icons.history, color: color),
+                title: Text(
+                  '${veri['tarih']}',
+                  style: TextStyle(fontFamily: "Tektur-Regular"),
+                ),
+                trailing: Text(
+                  '${veri['deger']}%',
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "Tektur-Regular",
+                  ),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIstatistikKarti(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 30),
+        SizedBox(height: 8),
+        Text(
+          title,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontFamily: "Tektur-Regular",
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+            fontFamily: "Tektur-Regular",
+          ),
+        ),
+      ],
     );
   }
 }

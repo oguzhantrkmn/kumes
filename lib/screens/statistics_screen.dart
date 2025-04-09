@@ -47,79 +47,113 @@ class StatisticsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Günlük Hayvan Hareketleri
-                Text(
-                  localizations.get('gunluk_hareketler'),
-                  style: TextStyle(
-                    fontFamily: "Tektur-Regular",
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                SizedBox(height: 10),
+                // Tavuk Sayısı Grafiği
+                _buildSectionTitle('Tavuk Sayısı İstatistikleri'),
                 Container(
                   height: 200,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: _buildMovementsChart(
-                      statisticsService.getTodaysMovements()),
+                  decoration: _buildCardDecoration(context),
+                  child: _buildTavukSayisiChart(),
                 ),
                 SizedBox(height: 20),
 
-                // Haftalık Hayvan Sayısı
-                Text(
-                  localizations.get('haftalik_hayvan_sayisi'),
-                  style: TextStyle(
-                    fontFamily: "Tektur-Regular",
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                SizedBox(height: 10),
+                // Yem Tüketim Grafiği
+                _buildSectionTitle('Yem Tüketim İstatistikleri'),
                 Container(
                   height: 200,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: _buildWeeklyCountChart(
-                      statisticsService.getLastWeekCounts()),
+                  decoration: _buildCardDecoration(context),
+                  child: _buildYemTuketimChart(),
                 ),
                 SizedBox(height: 20),
 
-                // Hava Durumu Bilgileri
-                if (statisticsService.getLatestWeather() != null) ...[
-                  Text(
-                    localizations.get('hava_durumu'),
-                    style: TextStyle(
-                      fontFamily: "Tektur-Regular",
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                // Su Tüketim Grafiği
+                _buildSectionTitle('Su Tüketim İstatistikleri'),
+                Container(
+                  height: 200,
+                  decoration: _buildCardDecoration(context),
+                  child: _buildSuTuketimChart(),
+                ),
+                SizedBox(height: 20),
+
+                // Sıcaklık Grafiği
+                _buildSectionTitle('Sıcaklık İstatistikleri'),
+                Container(
+                  height: 200,
+                  decoration: _buildCardDecoration(context),
+                  child: _buildSicaklikChart(),
+                ),
+                SizedBox(height: 20),
+
+                // Kapı Hareketleri Grafiği
+                _buildSectionTitle('Kapı Hareketleri'),
+                Container(
+                  height: 200,
+                  decoration: _buildCardDecoration(context),
+                  child: _buildKapiHareketleriChart(),
+                ),
+                SizedBox(height: 20),
+
+                // Sağlık İstatistikleri
+                _buildSectionTitle('Sağlık İstatistikleri'),
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: _buildCardDecoration(context),
+                  child: Column(
+                    children: [
+                      _buildHealthStatItem(
+                        'Tavuk Başına Yem',
+                        '0 g/gün',
+                        Icons.food_bank,
+                        Colors.orange,
+                      ),
+                      SizedBox(height: 10),
+                      _buildHealthStatItem(
+                        'Tavuk Başına Su',
+                        '0 ml/gün',
+                        Icons.water_drop,
+                        Colors.blue,
+                      ),
+                      SizedBox(height: 10),
+                      _buildHealthStatItem(
+                        'Ortalama Kilo Artışı',
+                        '0 g/gün',
+                        Icons.monitor_weight,
+                        Colors.green,
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 10),
-                  _buildWeatherCard(
-                      context, statisticsService.getLatestWeather()!),
-                ],
+                ),
+                SizedBox(height: 20),
+
+                // Uyarılar ve Öneriler
+                _buildSectionTitle('Uyarılar ve Öneriler'),
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: _buildCardDecoration(context),
+                  child: Column(
+                    children: [
+                      _buildWarningItem(
+                        'Sıcaklık Uyarısı',
+                        'Kümes sıcaklığı ideal aralıkta değil (18-22°C)',
+                        Icons.thermostat,
+                        Colors.red,
+                      ),
+                      SizedBox(height: 10),
+                      _buildWarningItem(
+                        'Yem Tüketimi',
+                        'Günlük yem tüketimi normal seviyede',
+                        Icons.food_bank,
+                        Colors.green,
+                      ),
+                      SizedBox(height: 10),
+                      _buildWarningItem(
+                        'Su Tüketimi',
+                        'Günlük su tüketimi normal seviyede',
+                        Icons.water_drop,
+                        Colors.green,
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -128,89 +162,35 @@ class StatisticsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMovementsChart(List<AnimalMovement> movements) {
-    final entryCounts = List.generate(24, (index) => 0);
-    final exitCounts = List.generate(24, (index) => 0);
-
-    for (var movement in movements) {
-      final hour = movement.timestamp.hour;
-      if (movement.type == 'entry') {
-        entryCounts[hour]++;
-      } else {
-        exitCounts[hour]++;
-      }
-    }
-
+  Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: EdgeInsets.all(16),
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: 10,
-          barTouchData: BarTouchData(enabled: false),
-          titlesData: FlTitlesData(
-            show: true,
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  if (value % 6 == 0) {
-                    return Text(
-                      '${value.toInt()}:00',
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    );
-                  }
-                  return const SizedBox();
-                },
-                reservedSize: 30,
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            topTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-          ),
-          gridData: FlGridData(show: false),
-          borderData: FlBorderData(show: false),
-          barGroups: List.generate(24, (index) {
-            return BarChartGroupData(
-              x: index,
-              barRods: [
-                BarChartRodData(
-                  toY: entryCounts[index].toDouble(),
-                  color: Colors.green,
-                  width: 8,
-                ),
-                BarChartRodData(
-                  toY: exitCounts[index].toDouble(),
-                  color: Colors.red,
-                  width: 8,
-                ),
-              ],
-            );
-          }),
+      padding: EdgeInsets.only(bottom: 10),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontFamily: "Tektur-Regular",
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
-  Widget _buildWeeklyCountChart(Map<DateTime, int> counts) {
-    final spots = counts.entries.map((e) {
-      return FlSpot(
-        e.key.millisecondsSinceEpoch.toDouble(),
-        e.value.toDouble(),
-      );
-    }).toList();
+  BoxDecoration _buildCardDecoration(BuildContext context) {
+    return BoxDecoration(
+      color: Theme.of(context).colorScheme.surface,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 10,
+          offset: Offset(0, 5),
+        ),
+      ],
+    );
+  }
 
+  Widget _buildTavukSayisiChart() {
     return Padding(
       padding: EdgeInsets.all(16),
       child: LineChart(
@@ -221,14 +201,21 @@ class StatisticsScreen extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
-                  final date =
-                      DateTime.fromMillisecondsSinceEpoch(value.toInt());
+                  final days = [
+                    'Pzt',
+                    'Sal',
+                    'Çar',
+                    'Per',
+                    'Cum',
+                    'Cmt',
+                    'Paz'
+                  ];
                   return Text(
-                    '${date.day}/${date.month}',
-                    style: const TextStyle(
+                    days[value.toInt()],
+                    style: TextStyle(
                       color: Colors.grey,
-                      fontWeight: FontWeight.bold,
                       fontSize: 12,
+                      fontFamily: "Tektur-Regular",
                     ),
                   );
                 },
@@ -236,27 +223,36 @@ class StatisticsScreen extends StatelessWidget {
               ),
             ),
             leftTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    '${value.toInt()}',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontFamily: "Tektur-Regular",
+                    ),
+                  );
+                },
+                reservedSize: 30,
+              ),
             ),
-            topTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
           borderData: FlBorderData(show: false),
           lineBarsData: [
             LineChartBarData(
-              spots: spots,
+              spots: List.generate(7, (index) => FlSpot(index.toDouble(), 0)),
               isCurved: true,
-              color: Colors.blue,
-              barWidth: 4,
+              color: Colors.orange,
+              barWidth: 3,
               isStrokeCapRound: true,
               dotData: FlDotData(show: true),
               belowBarData: BarAreaData(
                 show: true,
-                color: Colors.blue.withOpacity(0.2),
+                color: Colors.orange.withOpacity(0.2),
               ),
             ),
           ],
@@ -265,66 +261,369 @@ class StatisticsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWeatherCard(BuildContext context, WeatherData weather) {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: Offset(0, 5),
+  Widget _buildYemTuketimChart() {
+    return Padding(
+      padding: EdgeInsets.all(16),
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: 100,
+          barTouchData: BarTouchData(enabled: false),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  final days = [
+                    'Pzt',
+                    'Sal',
+                    'Çar',
+                    'Per',
+                    'Cum',
+                    'Cmt',
+                    'Paz'
+                  ];
+                  return Text(
+                    days[value.toInt()],
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontFamily: "Tektur-Regular",
+                    ),
+                  );
+                },
+                reservedSize: 30,
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    '${value.toInt()}%',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontFamily: "Tektur-Regular",
+                    ),
+                  );
+                },
+                reservedSize: 30,
+              ),
+            ),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildWeatherItem(
-            context,
-            Icons.thermostat,
-            '${weather.temperature.toStringAsFixed(1)}°C',
-            Colors.orange,
-          ),
-          _buildWeatherItem(
-            context,
-            Icons.water_drop,
-            '${weather.humidity.toStringAsFixed(1)}%',
-            Colors.blue,
-          ),
-          _buildWeatherItem(
-            context,
-            Icons.wb_sunny,
-            '${weather.lightLevel.toStringAsFixed(1)}',
-            Colors.yellow,
-          ),
-        ],
+          gridData: FlGridData(show: false),
+          borderData: FlBorderData(show: false),
+          barGroups: List.generate(7, (index) {
+            return BarChartGroupData(
+              x: index,
+              barRods: [
+                BarChartRodData(
+                  toY: 0,
+                  color: Colors.orange,
+                  width: 20,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ],
+            );
+          }),
+        ),
       ),
     );
   }
 
-  Widget _buildWeatherItem(
-    BuildContext context,
-    IconData icon,
+  Widget _buildSuTuketimChart() {
+    return Padding(
+      padding: EdgeInsets.all(16),
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: 100,
+          barTouchData: BarTouchData(enabled: false),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  final days = [
+                    'Pzt',
+                    'Sal',
+                    'Çar',
+                    'Per',
+                    'Cum',
+                    'Cmt',
+                    'Paz'
+                  ];
+                  return Text(
+                    days[value.toInt()],
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontFamily: "Tektur-Regular",
+                    ),
+                  );
+                },
+                reservedSize: 30,
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    '${value.toInt()}%',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontFamily: "Tektur-Regular",
+                    ),
+                  );
+                },
+                reservedSize: 30,
+              ),
+            ),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          gridData: FlGridData(show: false),
+          borderData: FlBorderData(show: false),
+          barGroups: List.generate(7, (index) {
+            return BarChartGroupData(
+              x: index,
+              barRods: [
+                BarChartRodData(
+                  toY: 0,
+                  color: Colors.blue,
+                  width: 20,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ],
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSicaklikChart() {
+    return Padding(
+      padding: EdgeInsets.all(16),
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(show: false),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  final days = [
+                    'Pzt',
+                    'Sal',
+                    'Çar',
+                    'Per',
+                    'Cum',
+                    'Cmt',
+                    'Paz'
+                  ];
+                  return Text(
+                    days[value.toInt()],
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontFamily: "Tektur-Regular",
+                    ),
+                  );
+                },
+                reservedSize: 30,
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    '${value.toInt()}°C',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontFamily: "Tektur-Regular",
+                    ),
+                  );
+                },
+                reservedSize: 30,
+              ),
+            ),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: List.generate(7, (index) => FlSpot(index.toDouble(), 0)),
+              isCurved: true,
+              color: Colors.red,
+              barWidth: 3,
+              isStrokeCapRound: true,
+              dotData: FlDotData(show: true),
+              belowBarData: BarAreaData(
+                show: true,
+                color: Colors.red.withOpacity(0.2),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKapiHareketleriChart() {
+    return Padding(
+      padding: EdgeInsets.all(16),
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: 10,
+          barTouchData: BarTouchData(enabled: false),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  if (value % 2 == 0) {
+                    // Her 2 saatte bir göster
+                    return Text(
+                      '${value.toInt()}',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                        fontFamily: "Tektur-Regular",
+                      ),
+                    );
+                  }
+                  return SizedBox();
+                },
+                reservedSize: 30,
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    '${value.toInt()}',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontFamily: "Tektur-Regular",
+                    ),
+                  );
+                },
+                reservedSize: 30,
+              ),
+            ),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          gridData: FlGridData(show: false),
+          borderData: FlBorderData(show: false),
+          barGroups: List.generate(24, (index) {
+            return BarChartGroupData(
+              x: index,
+              barRods: [
+                BarChartRodData(
+                  toY: 0,
+                  color: Colors.green,
+                  width: 12,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ],
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHealthStatItem(
+    String title,
     String value,
+    IconData icon,
     Color color,
   ) {
-    return Column(
+    return Row(
       children: [
         Icon(icon, color: color, size: 30),
-        SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontFamily: "Tektur-Regular",
-            fontSize: 16,
-            color: Theme.of(context).colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: "Tektur-Regular",
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontFamily: "Tektur-Regular",
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildWarningItem(
+    String title,
+    String message,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: "Tektur-Regular",
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontFamily: "Tektur-Regular",
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
