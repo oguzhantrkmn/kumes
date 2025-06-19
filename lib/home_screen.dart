@@ -12,6 +12,7 @@ import 'tavuk_sayisi_screen.dart';
 import 'settings_screen.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'screens/statistics_screen.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -40,22 +41,21 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _isFirstLaunch = true;
 
+  late DatabaseReference _temperatureRef;
+  String _todayKey = '';
+
   @override
   void initState() {
     super.initState();
     _initializeCamera();
-    _sicaklikDegeriniYukle();
+    _temperatureRef = FirebaseDatabase.instance.ref('sensor_data');
+    final now = DateTime.now();
+    _todayKey =
+        '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
     _yemSuDegerleriniYukle();
     _tavukSayisiniYukle();
     _kapiDurumunuYukle();
     _loadSettings();
-  }
-
-  Future<void> _sicaklikDegeriniYukle() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _sicaklik = prefs.getDouble('sicaklik_degeri') ?? 0.0;
-    });
   }
 
   Future<void> _yemSuDegerleriniYukle() async {
@@ -439,19 +439,45 @@ class _HomeScreenState extends State<HomeScreen> {
                                     crossAxisSpacing: 16,
                                     mainAxisSpacing: 16,
                                     children: [
-                                      _buildFeatureCard(
-                                        context,
-                                        "${localizations.get('sicaklik')}\n${_sicaklik.toStringAsFixed(1)}°C",
-                                        Icons.thermostat,
-                                        Colors.orange,
-                                        localizations,
-                                        () async {
-                                          final result =
-                                              await Navigator.pushNamed(
-                                                  context, '/sicaklik');
-                                          if (result == true) {
-                                            await _sicaklikDegeriniYukle();
+                                      StreamBuilder<DatabaseEvent>(
+                                        stream: _temperatureRef
+                                            .child(_todayKey)
+                                            .onValue,
+                                        builder: (context, snapshot) {
+                                          double sicaklik = 0.0;
+                                          if (snapshot.hasData &&
+                                              snapshot.data!.snapshot.value !=
+                                                  null) {
+                                            final dataMap =
+                                                Map<String, dynamic>.from(
+                                                    snapshot.data!.snapshot
+                                                        .value as Map);
+                                            if (dataMap.isNotEmpty) {
+                                              // Son veriyi bulmak için key'leri sıralayıp en sonuncuyu alıyoruz
+                                              final sortedKeys =
+                                                  dataMap.keys.toList()..sort();
+                                              final lastEntry =
+                                                  dataMap[sortedKeys.last]
+                                                      as Map;
+                                              sicaklik =
+                                                  (lastEntry['temperature']
+                                                              as num?)
+                                                          ?.toDouble() ??
+                                                      0.0;
+                                            }
                                           }
+                                          return _buildFeatureCard(
+                                            context,
+                                            "${localizations.get('sicaklik')}\n${sicaklik.toStringAsFixed(1)}°C",
+                                            Icons.thermostat,
+                                            Colors.orange,
+                                            localizations,
+                                            () async {
+                                              final result =
+                                                  await Navigator.pushNamed(
+                                                      context, '/sicaklik');
+                                            },
+                                          );
                                         },
                                       ),
                                       _buildFeatureCard(

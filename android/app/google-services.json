@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "347740376129",
+    "firebase_url": "https://akillitavukkumesi-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "akillitavukkumesi",
+    "storage_bucket": "akillitavukkumesi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:347740376129:android:717bfceadcf5a46aea0ac0",
+        "android_client_info": {
+          "package_name": "com.company.akillikumes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPJij63lL9L7lbCESOu1F0gf5-2QVEilA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

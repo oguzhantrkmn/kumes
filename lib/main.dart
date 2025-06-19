@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'splash_screen.dart';
 import 'home_screen.dart';
 import 'settings_screen.dart'; // Ayarlar sayfasını ekledik
@@ -15,7 +16,10 @@ import 'services/theme_service.dart';
 import 'services/camera_service.dart';
 import 'services/statistics_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
   runApp(
     MultiProvider(
       providers: [
