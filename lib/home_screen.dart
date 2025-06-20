@@ -13,6 +13,7 @@ import 'settings_screen.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'screens/statistics_screen.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:lottie/lottie.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -82,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
-    _cameraController = CameraController(cameras[0], ResolutionPreset.high);
+    _cameraController = CameraController(cameras[0], ResolutionPreset.medium);
 
     await _cameraController.initialize();
     _maxZoomLevel = await _cameraController.getMaxZoomLevel();
@@ -354,202 +355,222 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         Expanded(
-                          child: SingleChildScrollView(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    width: double.infinity,
-                                    height: cameraHeight,
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Theme.of(context).colorScheme.surface,
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
-                                          blurRadius: 10,
-                                          offset: Offset(0, 5),
-                                        ),
-                                      ],
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(20),
-                                      child: Stack(
-                                        children: [
-                                          _isCameraInitialized
-                                              ? Container(
-                                                  width: double.infinity,
-                                                  height: double.infinity,
-                                                  child: FittedBox(
-                                                    fit: BoxFit.cover,
-                                                    child: SizedBox(
-                                                      width: _cameraController
-                                                          .value
-                                                          .previewSize!
-                                                          .width,
-                                                      height: _cameraController
-                                                          .value
-                                                          .previewSize!
-                                                          .height,
-                                                      child: CameraPreview(
-                                                          _cameraController),
-                                                    ),
-                                                  ),
-                                                )
-                                              : Center(
-                                                  child:
-                                                      CircularProgressIndicator(),
-                                                ),
-                                          Positioned(
-                                            top: 10,
-                                            right: 10,
-                                            child: IconButton(
-                                              icon: Icon(
-                                                Icons.fullscreen,
-                                                color: Colors.white,
-                                                size: 30,
-                                              ),
-                                              onPressed: _toggleFullScreen,
-                                            ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Color(0xFFF8F9FA),
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(30.0),
+                              ),
+                            ),
+                            child: SingleChildScrollView(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: double.infinity,
+                                      height: cameraHeight,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .surface,
+                                        borderRadius: BorderRadius.circular(20),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.2),
+                                            blurRadius: 10,
+                                            offset: Offset(0, 5),
                                           ),
                                         ],
                                       ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: Stack(
+                                          children: [
+                                            _isCameraInitialized
+                                                ? Container(
+                                                    width: double.infinity,
+                                                    height: double.infinity,
+                                                    child: FittedBox(
+                                                      fit: BoxFit.cover,
+                                                      child: SizedBox(
+                                                        width: _cameraController
+                                                            .value
+                                                            .previewSize!
+                                                            .width,
+                                                        height:
+                                                            _cameraController
+                                                                .value
+                                                                .previewSize!
+                                                                .height,
+                                                        child: CameraPreview(
+                                                            _cameraController),
+                                                      ),
+                                                    ),
+                                                  )
+                                                : Center(
+                                                    child:
+                                                        CircularProgressIndicator(),
+                                                  ),
+                                            Positioned(
+                                              top: 10,
+                                              right: 10,
+                                              child: IconButton(
+                                                icon: Icon(
+                                                  Icons.fullscreen,
+                                                  color: Colors.white,
+                                                  size: 30,
+                                                ),
+                                                onPressed: _toggleFullScreen,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: 20),
-                                  Text(
-                                    localizations.get('kontrol_paneli'),
-                                    style: TextStyle(
-                                      fontFamily: "Tektur-Regular",
-                                      fontSize: 20,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                      fontWeight: FontWeight.bold,
+                                    SizedBox(height: 24),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0),
+                                      child: Text(
+                                        localizations.get('kontrol_paneli'),
+                                        style: TextStyle(
+                                          fontFamily: "Tektur-Regular",
+                                          fontSize: 22,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: 15),
-                                  GridView.count(
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    crossAxisCount: 2,
-                                    crossAxisSpacing: 16,
-                                    mainAxisSpacing: 16,
-                                    children: [
-                                      StreamBuilder<DatabaseEvent>(
-                                        stream: _temperatureRef
-                                            .child(_todayKey)
-                                            .onValue,
-                                        builder: (context, snapshot) {
-                                          double sicaklik = 0.0;
-                                          if (snapshot.hasData &&
-                                              snapshot.data!.snapshot.value !=
-                                                  null) {
-                                            final dataMap =
-                                                Map<String, dynamic>.from(
-                                                    snapshot.data!.snapshot
-                                                        .value as Map);
-                                            if (dataMap.isNotEmpty) {
-                                              // Son veriyi bulmak için key'leri sıralayıp en sonuncuyu alıyoruz
-                                              final sortedKeys =
-                                                  dataMap.keys.toList()..sort();
-                                              final lastEntry =
-                                                  dataMap[sortedKeys.last]
-                                                      as Map;
-                                              sicaklik =
-                                                  (lastEntry['temperature']
-                                                              as num?)
-                                                          ?.toDouble() ??
-                                                      0.0;
+                                    SizedBox(height: 16),
+                                    GridView.count(
+                                      shrinkWrap: true,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      crossAxisCount: 2,
+                                      crossAxisSpacing: 16,
+                                      mainAxisSpacing: 16,
+                                      children: [
+                                        StreamBuilder<DatabaseEvent>(
+                                          stream: _temperatureRef
+                                              .child(_todayKey)
+                                              .onValue,
+                                          builder: (context, snapshot) {
+                                            double sicaklik = 0.0;
+                                            if (snapshot.hasData &&
+                                                snapshot.data!.snapshot.value !=
+                                                    null) {
+                                              final dataMap =
+                                                  Map<String, dynamic>.from(
+                                                      snapshot.data!.snapshot
+                                                          .value as Map);
+                                              if (dataMap.isNotEmpty) {
+                                                final sortedKeys = dataMap.keys
+                                                    .toList()
+                                                  ..sort();
+                                                final lastEntry =
+                                                    dataMap[sortedKeys.last]
+                                                        as Map;
+                                                sicaklik =
+                                                    (lastEntry['temperature']
+                                                                as num?)
+                                                            ?.toDouble() ??
+                                                        0.0;
+                                              }
                                             }
-                                          }
-                                          return _buildFeatureCard(
-                                            context,
-                                            "${localizations.get('sicaklik')}\n${sicaklik.toStringAsFixed(1)}°C",
-                                            Icons.thermostat,
-                                            Colors.orange,
-                                            localizations,
-                                            () async {
-                                              final result =
-                                                  await Navigator.pushNamed(
-                                                      context, '/sicaklik');
-                                            },
-                                          );
-                                        },
-                                      ),
-                                      _buildFeatureCard(
-                                        context,
-                                        "${localizations.get('yem_su')}\nYem: %${_yemSeviyesi.toStringAsFixed(0)} | Su: %${_suSeviyesi.toStringAsFixed(0)}",
-                                        Icons.food_bank,
-                                        Colors.blue,
-                                        localizations,
-                                        () async {
-                                          final result =
-                                              await Navigator.pushNamed(
-                                                  context, '/yem_su');
-                                          if (result == true) {
-                                            await _yemSuDegerleriniYukle();
-                                          }
-                                        },
-                                      ),
-                                      _buildFeatureCard(
-                                        context,
-                                        "${localizations.get('kayan_kapi')}\n${_kapiDurumu ? 'Açık' : 'Kapalı'}",
-                                        Icons.door_front_door,
-                                        Colors.purple,
-                                        localizations,
-                                        () async {
-                                          final result =
-                                              await Navigator.pushNamed(
-                                                  context, '/kayan_kapi');
-                                          if (result == true) {
-                                            await _kapiDurumunuYukle();
-                                          }
-                                        },
-                                      ),
-                                      _buildFeatureCard(
-                                        context,
-                                        "${localizations.get('tavuk_sayisi')}\n${_tavukSayisi} adet",
-                                        Icons.pets,
-                                        Colors.red,
-                                        localizations,
-                                        () async {
-                                          final result =
-                                              await Navigator.pushNamed(
-                                                  context, '/tavuk_sayisi');
-                                          if (result == true) {
-                                            await _tavukSayisiniYukle();
-                                          }
-                                        },
-                                      ),
-                                      _buildFeatureCard(
-                                        context,
-                                        localizations.get('istatistikler'),
-                                        Icons.bar_chart,
-                                        Colors.green,
-                                        localizations,
-                                        () {
-                                          Navigator.pushNamed(
-                                              context, '/statistics');
-                                        },
-                                      ),
-                                      _buildFeatureCard(
-                                        context,
-                                        localizations.get('dis_kamera'),
-                                        Icons.camera_outdoor,
-                                        Colors.teal,
-                                        localizations,
-                                        () {
-                                          Navigator.pushNamed(
-                                              context, '/external_camera');
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                            return _buildFeatureCard(
+                                              context,
+                                              "${localizations.get('sicaklik')}\n${sicaklik.toStringAsFixed(1)}°C",
+                                              [
+                                                'assets/lottie/thermometer.json'
+                                              ],
+                                              Colors.orange,
+                                              localizations,
+                                              () async {
+                                                final result =
+                                                    await Navigator.pushNamed(
+                                                        context, '/sicaklik');
+                                              },
+                                            );
+                                          },
+                                        ),
+                                        _buildFeatureCard(
+                                          context,
+                                          "${localizations.get('yem_su')}\nYem: %${_yemSeviyesi.toStringAsFixed(0)} | Su: %${_suSeviyesi.toStringAsFixed(0)}",
+                                          [
+                                            'assets/lottie/feed.json',
+                                            'assets/lottie/water.json'
+                                          ],
+                                          Colors.blue,
+                                          localizations,
+                                          () async {
+                                            final result =
+                                                await Navigator.pushNamed(
+                                                    context, '/yem_su');
+                                            if (result == true) {
+                                              await _yemSuDegerleriniYukle();
+                                            }
+                                          },
+                                        ),
+                                        _buildFeatureCard(
+                                          context,
+                                          "${localizations.get('kayan_kapi')}\n${_kapiDurumu ? 'Açık' : 'Kapalı'}",
+                                          ['assets/lottie/door.json'],
+                                          Colors.purple,
+                                          localizations,
+                                          () async {
+                                            final result =
+                                                await Navigator.pushNamed(
+                                                    context, '/kayan_kapi');
+                                            if (result == true) {
+                                              await _kapiDurumunuYukle();
+                                            }
+                                          },
+                                        ),
+                                        _buildFeatureCard(
+                                          context,
+                                          "${localizations.get('tavuk_sayisi')}\n${_tavukSayisi} adet",
+                                          ['assets/lottie/chicken.json'],
+                                          Colors.red,
+                                          localizations,
+                                          () async {
+                                            final result =
+                                                await Navigator.pushNamed(
+                                                    context, '/tavuk_sayisi');
+                                            if (result == true) {
+                                              await _tavukSayisiniYukle();
+                                            }
+                                          },
+                                        ),
+                                        _buildFeatureCard(
+                                          context,
+                                          localizations.get('istatistikler'),
+                                          ['assets/lottie/statistics.json'],
+                                          Colors.green,
+                                          localizations,
+                                          () {
+                                            Navigator.pushNamed(
+                                                context, '/statistics');
+                                          },
+                                        ),
+                                        _buildFeatureCard(
+                                          context,
+                                          localizations.get('dis_kamera'),
+                                          ['assets/lottie/camera.json'],
+                                          Colors.teal,
+                                          localizations,
+                                          () {
+                                            Navigator.pushNamed(
+                                                context, '/external_camera');
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -564,7 +585,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFeatureCard(
     BuildContext context,
     String title,
-    IconData icon,
+    List<String> animationPaths,
     Color color,
     AppLocalizations localizations,
     VoidCallback onTap,
@@ -577,77 +598,75 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: [
+              color.withOpacity(0.1),
+              Colors.white,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: color.withOpacity(0.3), width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: color.withOpacity(0.15),
               blurRadius: 10,
               offset: Offset(0, 5),
             ),
           ],
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (baslik == localizations.get('yem_su'))
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child:
-                        Icon(Icons.food_bank, size: 30, color: Colors.orange),
-                  ),
-                  SizedBox(width: 8),
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.water_drop, size: 30, color: Colors.blue),
-                  ),
-                ],
-              )
-            else
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 30, color: color),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                flex: 3,
+                child: baslik == localizations.get('yem_su')
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(child: Lottie.asset(animationPaths[0])),
+                          SizedBox(width: 4),
+                          Expanded(child: Lottie.asset(animationPaths[1])),
+                        ],
+                      )
+                    : Lottie.asset(animationPaths[0]),
               ),
-            SizedBox(height: 8),
-            Text(
-              baslik,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: "Tektur-Regular",
-                fontSize: 16,
-                color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (deger.isNotEmpty) ...[
-              SizedBox(height: 4),
-              Text(
-                deger,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: "Tektur-Regular",
-                  fontSize: 14,
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+              SizedBox(height: 8),
+              FittedBox(
+                child: Text(
+                  baslik,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: "Tektur-Regular",
+                    fontSize: 16,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
+              if (deger.isNotEmpty) ...[
+                SizedBox(height: 4),
+                FittedBox(
+                  child: Text(
+                    deger,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: "Tektur-Regular",
+                      fontSize: 14,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.7),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

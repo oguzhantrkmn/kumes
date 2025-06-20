@@ -29,7 +29,7 @@ class _ExternalCameraScreenState extends State<ExternalCameraScreen> {
 
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
-    _cameraController = CameraController(cameras[0], ResolutionPreset.high);
+    _cameraController = CameraController(cameras[0], ResolutionPreset.medium);
 
     await _cameraController.initialize();
     _maxZoomLevel = await _cameraController.getMaxZoomLevel();
