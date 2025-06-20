@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kumes/widgets/rtsp_stream_view.dart';
 import 'package:provider/provider.dart';
 import '../services/camera_service.dart';
 import '../services/language_service.dart';
@@ -56,16 +57,15 @@ class CameraScreen extends StatelessWidget {
             padding: EdgeInsets.all(20),
             child: Column(
               children: [
-                // Canlı Kamera Görüntüsü (Placeholder)
                 Container(
                   height: 250,
                   decoration: BoxDecoration(
                     color: Colors.black87,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Center(
-                    child:
-                        Icon(Icons.videocam, size: 50, color: Colors.white54),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: RtspStreamView(),
                   ),
                 ),
                 SizedBox(height: 20),
