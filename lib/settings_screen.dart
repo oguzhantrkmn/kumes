@@ -13,7 +13,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _bildirimler = true;
-  bool _otomatikKapi = false;
   final String _phoneNumber = "+905426229055";
 
   @override
@@ -26,7 +25,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _bildirimler = prefs.getBool('bildirimler') ?? true;
-      _otomatikKapi = prefs.getBool('otomatik_kapi') ?? false;
     });
   }
 
@@ -35,14 +33,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setBool('bildirimler', value);
     setState(() {
       _bildirimler = value;
-    });
-  }
-
-  Future<void> _otomatikKapiDegistir(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('otomatik_kapi', value);
-    setState(() {
-      _otomatikKapi = value;
     });
   }
 
@@ -118,54 +108,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     activeColor: Colors.orange,
                   ),
                   subtitle: localizations.get('bildirimler_aciklama'),
-                ),
-                SizedBox(height: 20),
-                _buildSettingCard(
-                  context,
-                  localizations.get('otomatik_kapi'),
-                  Icons.door_sliding,
-                  Colors.blue,
-                  child: Switch(
-                    value: _otomatikKapi,
-                    onChanged: _otomatikKapiDegistir,
-                    activeColor: Colors.blue,
-                  ),
-                  subtitle: localizations.get('otomatik_kapi_aciklama'),
-                ),
-                SizedBox(height: 20),
-                _buildSettingCard(
-                  context,
-                  localizations.get('dil'),
-                  Icons.language,
-                  Colors.green,
-                  child: DropdownButton<String>(
-                    value: languageService.currentLanguage,
-                    dropdownColor: Theme.of(context).colorScheme.surface,
-                    items: [
-                      "Türkçe",
-                      "English",
-                      "Deutsch",
-                      "Français",
-                      "Español"
-                    ].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(
-                          value,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                            fontFamily: "Tektur-Regular",
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (newValue) {
-                      if (newValue != null) {
-                        languageService.setLanguage(newValue);
-                      }
-                    },
-                  ),
-                  subtitle: localizations.get('dil_aciklama'),
                 ),
                 SizedBox(height: 20),
                 _buildSettingCard(

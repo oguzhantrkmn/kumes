@@ -10,13 +10,33 @@ class ExternalCameraScreen extends StatelessWidget {
     final localizations = AppLocalizations(languageService.currentLanguage);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(localizations.get('dis_kamera')),
-        backgroundColor: Colors.black,
-      ),
       backgroundColor: Colors.black,
-      body: const Center(
-        child: RtspStreamView(),
+      body: Stack(
+        children: [
+          // Kamera görüntüsü tam ekran ve döndürülmüş şekilde
+          Positioned.fill(
+            child: RotatedBox(
+              quarterTurns: 5, // Sağa 90 derece döndür
+              child: RtspStreamView(url: 'http://192.168.0.32:8082'),
+            ),
+          ),
+          // Sol üstte geri butonu
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: CircleAvatar(
+                  backgroundColor: Colors.black54,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

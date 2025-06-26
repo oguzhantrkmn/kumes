@@ -3,8 +3,127 @@ import 'package:provider/provider.dart';
 import '../services/statistics_service.dart';
 import '../services/language_service.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:firebase_database/firebase_database.dart';
 
-class StatisticsScreen extends StatelessWidget {
+class StatisticsScreen extends StatefulWidget {
+  @override
+  State<StatisticsScreen> createState() => _StatisticsScreenState();
+}
+
+class _StatisticsScreenState extends State<StatisticsScreen> {
+  final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  late DatabaseReference _temperatureRef;
+  Map<String, List<double>> _gunlukSicaklik = {};
+  Map<String, List<double>> _gunlukYem = {};
+  Map<String, List<double>> _gunlukSu = {};
+  Map<String, List<double>> _gunlukGaz = {};
+  List<String> _son7Gun = [];
+  bool _loading = true;
+  String _todayKey = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _temperatureRef = FirebaseDatabase.instance.ref('sensor_data');
+    _olusturSon7Gun();
+    final now = DateTime.now();
+    _todayKey =
+        '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+    _verileriYukle();
+  }
+
+  void _olusturSon7Gun() {
+    final now = DateTime.now();
+    _son7Gun = List.generate(7, (i) {
+      final date = now.subtract(Duration(days: i));
+      return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
+    }).reversed.toList();
+  }
+
+  Future<void> _verileriYukle() async {
+    Map<String, List<double>> gunlukSicaklik = {};
+    Map<String, List<double>> gunlukYem = {};
+    Map<String, List<double>> gunlukSu = {};
+    Map<String, List<double>> gunlukGaz = {};
+
+    for (String gun in _son7Gun) {
+      final snap = await _temperatureRef.child(gun).get();
+      if (snap.exists) {
+        List<double> sicakliklar = [];
+        List<double> yemler = [];
+        List<double> sular = [];
+        List<double> gazlar = [];
+
+        for (final child in snap.children) {
+          final data = child.value as Map?;
+          if (data != null) {
+            if (data['temperature'] != null) {
+              sicakliklar.add((data['temperature'] as num).toDouble());
+            }
+            if (data['yemYuzdesi'] != null) {
+              yemler.add((data['yemYuzdesi'] as num).toDouble());
+            }
+            if (data['suYuzdesi'] != null) {
+              sular.add((data['suYuzdesi'] as num).toDouble());
+            }
+            if (data['gazSeviyesi'] != null) {
+              gazlar.add((data['gazSeviyesi'] as num).toDouble());
+            }
+          }
+        }
+        gunlukSicaklik[gun] = sicakliklar;
+        gunlukYem[gun] = yemler;
+        gunlukSu[gun] = sular;
+        gunlukGaz[gun] = gazlar;
+      } else {
+        gunlukSicaklik[gun] = [];
+        gunlukYem[gun] = [];
+        gunlukSu[gun] = [];
+        gunlukGaz[gun] = [];
+      }
+    }
+
+    setState(() {
+      _gunlukSicaklik = gunlukSicaklik;
+      _gunlukYem = gunlukYem;
+      _gunlukSu = gunlukSu;
+      _gunlukGaz = gunlukGaz;
+      _loading = false;
+    });
+  }
+
+  List<double> _gunlukSicaklikOrtalamalar() {
+    return _son7Gun.map((gun) {
+      final veriler = _gunlukSicaklik[gun] ?? [];
+      if (veriler.isEmpty) return 0.0;
+      return veriler.reduce((a, b) => a + b) / veriler.length;
+    }).toList();
+  }
+
+  List<double> _gunlukYemOrtalamalar() {
+    return _son7Gun.map((gun) {
+      final veriler = _gunlukYem[gun] ?? [];
+      if (veriler.isEmpty) return 0.0;
+      return veriler.reduce((a, b) => a + b) / veriler.length;
+    }).toList();
+  }
+
+  List<double> _gunlukSuOrtalamalar() {
+    return _son7Gun.map((gun) {
+      final veriler = _gunlukSu[gun] ?? [];
+      if (veriler.isEmpty) return 0.0;
+      return veriler.reduce((a, b) => a + b) / veriler.length;
+    }).toList();
+  }
+
+  List<double> _gunlukGazOrtalamalar() {
+    return _son7Gun.map((gun) {
+      final veriler = _gunlukGaz[gun] ?? [];
+      if (veriler.isEmpty) return 0.0;
+      return veriler.reduce((a, b) => a + b) / veriler.length;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final statisticsService = Provider.of<StatisticsService>(context);
@@ -30,135 +149,362 @@ class StatisticsScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Theme.of(context).colorScheme.surface,
-              Theme.of(context).scaffoldBackgroundColor,
-            ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Tavuk Sayısı Grafiği
-                _buildSectionTitle('Tavuk Sayısı İstatistikleri'),
-                Container(
-                  height: 200,
-                  decoration: _buildCardDecoration(context),
-                  child: _buildTavukSayisiChart(),
+      body: _loading
+          ? Center(child: CircularProgressIndicator())
+          : Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Theme.of(context).colorScheme.surface,
+                    Theme.of(context).scaffoldBackgroundColor,
+                  ],
                 ),
-                SizedBox(height: 20),
-
-                // Yem Tüketim Grafiği
-                _buildSectionTitle('Yem Tüketim İstatistikleri'),
-                Container(
-                  height: 200,
-                  decoration: _buildCardDecoration(context),
-                  child: _buildYemTuketimChart(),
-                ),
-                SizedBox(height: 20),
-
-                // Su Tüketim Grafiği
-                _buildSectionTitle('Su Tüketim İstatistikleri'),
-                Container(
-                  height: 200,
-                  decoration: _buildCardDecoration(context),
-                  child: _buildSuTuketimChart(),
-                ),
-                SizedBox(height: 20),
-
-                // Sıcaklık Grafiği
-                _buildSectionTitle('Sıcaklık İstatistikleri'),
-                Container(
-                  height: 200,
-                  decoration: _buildCardDecoration(context),
-                  child: _buildSicaklikChart(),
-                ),
-                SizedBox(height: 20),
-
-                // Kapı Hareketleri Grafiği
-                _buildSectionTitle('Kapı Hareketleri'),
-                Container(
-                  height: 200,
-                  decoration: _buildCardDecoration(context),
-                  child: _buildKapiHareketleriChart(),
-                ),
-                SizedBox(height: 20),
-
-                // Sağlık İstatistikleri
-                _buildSectionTitle('Sağlık İstatistikleri'),
-                Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: _buildCardDecoration(context),
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHealthStatItem(
-                        'Tavuk Başına Yem',
-                        '0 g/gün',
-                        Icons.food_bank,
-                        Colors.orange,
+                      // Sıcaklık Grafiği
+                      _buildSectionTitle('Sıcaklık İstatistikleri'),
+                      Container(
+                        height: 250,
+                        decoration: _buildCardDecoration(context),
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Son 7 Günlük Sıcaklık Grafiği',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: "Tektur-Regular",
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              SizedBox(height: 10),
+                              Expanded(
+                                child: LineChart(
+                                  LineChartData(
+                                    gridData: FlGridData(show: false),
+                                    titlesData: FlTitlesData(
+                                      leftTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          reservedSize: 40,
+                                          getTitlesWidget: (value, meta) {
+                                            return Text(
+                                              '${value.toInt()}°C',
+                                              style: TextStyle(
+                                                color: Colors.grey[600],
+                                                fontSize: 12,
+                                                fontFamily: "Tektur-Regular",
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      bottomTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          getTitlesWidget: (value, meta) {
+                                            if (value.toInt() >= 0 &&
+                                                value.toInt() <
+                                                    _son7Gun.length) {
+                                              final date =
+                                                  _son7Gun[value.toInt()]
+                                                      .split('-');
+                                              return Text(
+                                                '${date[0]}.${date[1]}',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 12,
+                                                  fontFamily: "Tektur-Regular",
+                                                ),
+                                              );
+                                            }
+                                            return Text('');
+                                          },
+                                        ),
+                                      ),
+                                      rightTitles: AxisTitles(
+                                        sideTitles:
+                                            SideTitles(showTitles: false),
+                                      ),
+                                      topTitles: AxisTitles(
+                                        sideTitles:
+                                            SideTitles(showTitles: false),
+                                      ),
+                                    ),
+                                    borderData: FlBorderData(show: false),
+                                    lineBarsData: [
+                                      LineChartBarData(
+                                        spots: List.generate(
+                                          _gunlukSicaklikOrtalamalar().length,
+                                          (index) => FlSpot(
+                                              index.toDouble(),
+                                              _gunlukSicaklikOrtalamalar()[
+                                                  index]),
+                                        ),
+                                        isCurved: true,
+                                        color: Colors.orange,
+                                        barWidth: 3,
+                                        isStrokeCapRound: true,
+                                        dotData: FlDotData(show: true),
+                                        belowBarData: BarAreaData(
+                                          show: true,
+                                          color: Colors.orange.withOpacity(0.1),
+                                        ),
+                                      ),
+                                    ],
+                                    minY: 0,
+                                    maxY: 40,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      SizedBox(height: 10),
-                      _buildHealthStatItem(
-                        'Tavuk Başına Su',
-                        '0 ml/gün',
-                        Icons.water_drop,
-                        Colors.blue,
+                      SizedBox(height: 20),
+
+                      // Yem & Su Grafiği
+                      _buildSectionTitle('Yem & Su İstatistikleri'),
+                      Container(
+                        height: 250,
+                        decoration: _buildCardDecoration(context),
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Son 7 Günlük Yem & Su Seviyesi',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: "Tektur-Regular",
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              SizedBox(height: 10),
+                              Expanded(
+                                child: LineChart(
+                                  LineChartData(
+                                    gridData: FlGridData(show: false),
+                                    titlesData: FlTitlesData(
+                                      leftTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          reservedSize: 40,
+                                          getTitlesWidget: (value, meta) {
+                                            return Text(
+                                              '%${value.toInt()}',
+                                              style: TextStyle(
+                                                color: Colors.grey[600],
+                                                fontSize: 12,
+                                                fontFamily: "Tektur-Regular",
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      bottomTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          getTitlesWidget: (value, meta) {
+                                            if (value.toInt() >= 0 &&
+                                                value.toInt() <
+                                                    _son7Gun.length) {
+                                              final date =
+                                                  _son7Gun[value.toInt()]
+                                                      .split('-');
+                                              return Text(
+                                                '${date[0]}.${date[1]}',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 12,
+                                                  fontFamily: "Tektur-Regular",
+                                                ),
+                                              );
+                                            }
+                                            return Text('');
+                                          },
+                                        ),
+                                      ),
+                                      rightTitles: AxisTitles(
+                                        sideTitles:
+                                            SideTitles(showTitles: false),
+                                      ),
+                                      topTitles: AxisTitles(
+                                        sideTitles:
+                                            SideTitles(showTitles: false),
+                                      ),
+                                    ),
+                                    borderData: FlBorderData(show: false),
+                                    lineBarsData: [
+                                      LineChartBarData(
+                                        spots: List.generate(
+                                          _gunlukYemOrtalamalar().length,
+                                          (index) => FlSpot(index.toDouble(),
+                                              _gunlukYemOrtalamalar()[index]),
+                                        ),
+                                        isCurved: true,
+                                        color: Colors.orange,
+                                        barWidth: 3,
+                                        isStrokeCapRound: true,
+                                        dotData: FlDotData(show: true),
+                                        belowBarData: BarAreaData(
+                                          show: true,
+                                          color: Colors.orange.withOpacity(0.1),
+                                        ),
+                                      ),
+                                      LineChartBarData(
+                                        spots: List.generate(
+                                          _gunlukSuOrtalamalar().length,
+                                          (index) => FlSpot(index.toDouble(),
+                                              _gunlukSuOrtalamalar()[index]),
+                                        ),
+                                        isCurved: true,
+                                        color: Colors.blue,
+                                        barWidth: 3,
+                                        isStrokeCapRound: true,
+                                        dotData: FlDotData(show: true),
+                                        belowBarData: BarAreaData(
+                                          show: true,
+                                          color: Colors.blue.withOpacity(0.1),
+                                        ),
+                                      ),
+                                    ],
+                                    minY: 0,
+                                    maxY: 100,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      SizedBox(height: 10),
-                      _buildHealthStatItem(
-                        'Ortalama Kilo Artışı',
-                        '0 g/gün',
-                        Icons.monitor_weight,
-                        Colors.green,
+                      SizedBox(height: 20),
+
+                      // Hava Kontrol Grafiği
+                      _buildSectionTitle('Hava Kontrol İstatistikleri'),
+                      Container(
+                        height: 250,
+                        decoration: _buildCardDecoration(context),
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Son 7 Günlük Gaz Seviyesi',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: "Tektur-Regular",
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              SizedBox(height: 10),
+                              Expanded(
+                                child: LineChart(
+                                  LineChartData(
+                                    gridData: FlGridData(show: false),
+                                    titlesData: FlTitlesData(
+                                      leftTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          reservedSize: 40,
+                                          interval: 300,
+                                          getTitlesWidget: (value, meta) {
+                                            if (value % 300 == 0) {
+                                              return Text(
+                                                '${value.toInt()} ppm',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 12,
+                                                  fontFamily: "Tektur-Regular",
+                                                ),
+                                              );
+                                            }
+                                            return Container();
+                                          },
+                                        ),
+                                      ),
+                                      bottomTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          getTitlesWidget: (value, meta) {
+                                            if (value.toInt() >= 0 &&
+                                                value.toInt() <
+                                                    _son7Gun.length) {
+                                              final date =
+                                                  _son7Gun[value.toInt()]
+                                                      .split('-');
+                                              return Text(
+                                                '${date[0]}.${date[1]}',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 12,
+                                                  fontFamily: "Tektur-Regular",
+                                                ),
+                                              );
+                                            }
+                                            return Text('');
+                                          },
+                                        ),
+                                      ),
+                                      rightTitles: AxisTitles(
+                                        sideTitles:
+                                            SideTitles(showTitles: false),
+                                      ),
+                                      topTitles: AxisTitles(
+                                        sideTitles:
+                                            SideTitles(showTitles: false),
+                                      ),
+                                    ),
+                                    borderData: FlBorderData(show: false),
+                                    lineBarsData: [
+                                      LineChartBarData(
+                                        spots: List.generate(
+                                          _gunlukGazOrtalamalar().length,
+                                          (index) => FlSpot(index.toDouble(),
+                                              _gunlukGazOrtalamalar()[index]),
+                                        ),
+                                        isCurved: true,
+                                        color: Colors.brown,
+                                        barWidth: 3,
+                                        isStrokeCapRound: true,
+                                        dotData: FlDotData(show: true),
+                                        belowBarData: BarAreaData(
+                                          show: true,
+                                          color: Colors.brown.withOpacity(0.1),
+                                        ),
+                                      ),
+                                    ],
+                                    minY: 0,
+                                    maxY: 1500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 20),
-
-                // Uyarılar ve Öneriler
-                _buildSectionTitle('Uyarılar ve Öneriler'),
-                Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: _buildCardDecoration(context),
-                  child: Column(
-                    children: [
-                      _buildWarningItem(
-                        'Sıcaklık Uyarısı',
-                        'Kümes sıcaklığı ideal aralıkta değil (18-22°C)',
-                        Icons.thermostat,
-                        Colors.red,
-                      ),
-                      SizedBox(height: 10),
-                      _buildWarningItem(
-                        'Yem Tüketimi',
-                        'Günlük yem tüketimi normal seviyede',
-                        Icons.food_bank,
-                        Colors.green,
-                      ),
-                      SizedBox(height: 10),
-                      _buildWarningItem(
-                        'Su Tüketimi',
-                        'Günlük su tüketimi normal seviyede',
-                        Icons.water_drop,
-                        Colors.green,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -169,8 +515,9 @@ class StatisticsScreen extends StatelessWidget {
         title,
         style: TextStyle(
           fontFamily: "Tektur-Regular",
-          fontSize: 18,
+          fontSize: 20,
           fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
     );
@@ -187,443 +534,6 @@ class StatisticsScreen extends StatelessWidget {
           offset: Offset(0, 5),
         ),
       ],
-    );
-  }
-
-  Widget _buildTavukSayisiChart() {
-    return Padding(
-      padding: EdgeInsets.all(16),
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  final days = [
-                    'Pzt',
-                    'Sal',
-                    'Çar',
-                    'Per',
-                    'Cum',
-                    'Cmt',
-                    'Paz'
-                  ];
-                  return Text(
-                    days[value.toInt()],
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontFamily: "Tektur-Regular",
-                    ),
-                  );
-                },
-                reservedSize: 30,
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    '${value.toInt()}',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontFamily: "Tektur-Regular",
-                    ),
-                  );
-                },
-                reservedSize: 30,
-              ),
-            ),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: List.generate(7, (index) => FlSpot(index.toDouble(), 0)),
-              isCurved: true,
-              color: Colors.orange,
-              barWidth: 3,
-              isStrokeCapRound: true,
-              dotData: FlDotData(show: true),
-              belowBarData: BarAreaData(
-                show: true,
-                color: Colors.orange.withOpacity(0.2),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildYemTuketimChart() {
-    return Padding(
-      padding: EdgeInsets.all(16),
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: 100,
-          barTouchData: BarTouchData(enabled: false),
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  final days = [
-                    'Pzt',
-                    'Sal',
-                    'Çar',
-                    'Per',
-                    'Cum',
-                    'Cmt',
-                    'Paz'
-                  ];
-                  return Text(
-                    days[value.toInt()],
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontFamily: "Tektur-Regular",
-                    ),
-                  );
-                },
-                reservedSize: 30,
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    '${value.toInt()}%',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontFamily: "Tektur-Regular",
-                    ),
-                  );
-                },
-                reservedSize: 30,
-              ),
-            ),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          gridData: FlGridData(show: false),
-          borderData: FlBorderData(show: false),
-          barGroups: List.generate(7, (index) {
-            return BarChartGroupData(
-              x: index,
-              barRods: [
-                BarChartRodData(
-                  toY: 0,
-                  color: Colors.orange,
-                  width: 20,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ],
-            );
-          }),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSuTuketimChart() {
-    return Padding(
-      padding: EdgeInsets.all(16),
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: 100,
-          barTouchData: BarTouchData(enabled: false),
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  final days = [
-                    'Pzt',
-                    'Sal',
-                    'Çar',
-                    'Per',
-                    'Cum',
-                    'Cmt',
-                    'Paz'
-                  ];
-                  return Text(
-                    days[value.toInt()],
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontFamily: "Tektur-Regular",
-                    ),
-                  );
-                },
-                reservedSize: 30,
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    '${value.toInt()}%',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontFamily: "Tektur-Regular",
-                    ),
-                  );
-                },
-                reservedSize: 30,
-              ),
-            ),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          gridData: FlGridData(show: false),
-          borderData: FlBorderData(show: false),
-          barGroups: List.generate(7, (index) {
-            return BarChartGroupData(
-              x: index,
-              barRods: [
-                BarChartRodData(
-                  toY: 0,
-                  color: Colors.blue,
-                  width: 20,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ],
-            );
-          }),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSicaklikChart() {
-    return Padding(
-      padding: EdgeInsets.all(16),
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(show: false),
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  final days = [
-                    'Pzt',
-                    'Sal',
-                    'Çar',
-                    'Per',
-                    'Cum',
-                    'Cmt',
-                    'Paz'
-                  ];
-                  return Text(
-                    days[value.toInt()],
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontFamily: "Tektur-Regular",
-                    ),
-                  );
-                },
-                reservedSize: 30,
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    '${value.toInt()}°C',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontFamily: "Tektur-Regular",
-                    ),
-                  );
-                },
-                reservedSize: 30,
-              ),
-            ),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: List.generate(7, (index) => FlSpot(index.toDouble(), 0)),
-              isCurved: true,
-              color: Colors.red,
-              barWidth: 3,
-              isStrokeCapRound: true,
-              dotData: FlDotData(show: true),
-              belowBarData: BarAreaData(
-                show: true,
-                color: Colors.red.withOpacity(0.2),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildKapiHareketleriChart() {
-    return Padding(
-      padding: EdgeInsets.all(16),
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: 10,
-          barTouchData: BarTouchData(enabled: false),
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  if (value % 2 == 0) {
-                    // Her 2 saatte bir göster
-                    return Text(
-                      '${value.toInt()}',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                        fontFamily: "Tektur-Regular",
-                      ),
-                    );
-                  }
-                  return SizedBox();
-                },
-                reservedSize: 30,
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  return Text(
-                    '${value.toInt()}',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontFamily: "Tektur-Regular",
-                    ),
-                  );
-                },
-                reservedSize: 30,
-              ),
-            ),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-          gridData: FlGridData(show: false),
-          borderData: FlBorderData(show: false),
-          barGroups: List.generate(24, (index) {
-            return BarChartGroupData(
-              x: index,
-              barRods: [
-                BarChartRodData(
-                  toY: 0,
-                  color: Colors.green,
-                  width: 12,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ],
-            );
-          }),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHealthStatItem(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 30),
-        SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontFamily: "Tektur-Regular",
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                value,
-                style: TextStyle(
-                  fontFamily: "Tektur-Regular",
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWarningItem(
-    String title,
-    String message,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: "Tektur-Regular",
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-                ),
-                Text(
-                  message,
-                  style: TextStyle(
-                    fontFamily: "Tektur-Regular",
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

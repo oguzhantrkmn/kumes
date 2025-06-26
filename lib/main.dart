@@ -6,11 +6,11 @@ import 'home_screen.dart';
 import 'settings_screen.dart'; // Ayarlar sayfasını ekledik
 import 'sicaklik_screen.dart'; // Sıcaklık sayfası
 import 'yem_su_screen.dart'; // Yem & Su sayfası
-import 'kayan_kapi_screen.dart'; // Kayan Kapı sayfası
 import 'tavuk_sayisi_screen.dart';
 import 'screens/camera_screen.dart';
 import 'screens/statistics_screen.dart';
 import 'screens/external_camera_screen.dart';
+import 'screens/gaz_kontrol_screen.dart';
 import 'services/language_service.dart';
 import 'services/theme_service.dart';
 import 'services/camera_service.dart';
@@ -50,8 +50,6 @@ class MyApp extends StatelessWidget {
                 return SicaklikScreen();
               case '/yem_su':
                 return YemSuScreen();
-              case '/kayan_kapi':
-                return KayanKapiScreen();
               case '/tavuk_sayisi':
                 return TavukSayisiScreen();
               case '/ayarlar':
@@ -60,6 +58,8 @@ class MyApp extends StatelessWidget {
                 return StatisticsScreen();
               case '/external_camera':
                 return ExternalCameraScreen();
+              case '/gaz_sensoru':
+                return GazKontrolScreen();
               default:
                 return HomeScreen();
             }

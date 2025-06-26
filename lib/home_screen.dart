@@ -5,9 +5,9 @@ import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'package:kumes/widgets/rtsp_stream_view.dart';
 import 'services/language_service.dart';
+import 'services/theme_service.dart';
 import 'sicaklik_screen.dart';
 import 'yem_su_screen.dart';
-import 'kayan_kapi_screen.dart';
 import 'tavuk_sayisi_screen.dart';
 import 'settings_screen.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
@@ -73,6 +73,14 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _kapiDurumunuDegistir() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _kapiDurumu = !_kapiDurumu;
+    });
+    await prefs.setBool('kapi_durumu', _kapiDurumu);
+  }
+
   @override
   void dispose() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -122,39 +130,42 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showNextTutorialDialog(int index) {
     List<Map<String, dynamic>> tutorials = [
       {
-        'title': 'Sıcaklık Kontrolü',
-        'desc':
-            'Bu bölümde kümesin sıcaklığını takip edebilir ve geçmiş sıcaklık verilerini görüntüleyebilirsiniz.',
-        'icon': Icons.thermostat,
-        'color': Colors.orange,
+        'title': 'Sıcaklık',
+        'desc': 'Kümesin sıcaklığını ve geçmiş verileri takip edebilirsiniz.',
+        'lottie': 'assets/lottie/thermometer.json',
       },
       {
-        'title': 'Yem ve Su Seviyeleri',
-        'desc':
-            'Yem ve su seviyelerini buradan takip edebilir, geçmiş verileri görüntüleyebilirsiniz.',
-        'icon': Icons.water_drop,
-        'color': Colors.blue,
+        'title': 'Yem ve Su',
+        'desc': 'Yem ve su seviyelerini anlık ve geçmiş olarak görebilirsiniz.',
+        'lottie': 'assets/lottie/feed.json',
+        'lottie2': 'assets/lottie/water.json',
       },
       {
-        'title': 'Kayan Kapı Kontrolü',
-        'desc':
-            'Kümes kapısını buradan kontrol edebilir, otomatik kapanma saati ayarlayabilirsiniz.',
-        'icon': Icons.door_front_door,
-        'color': Colors.purple,
+        'title': 'Kayan Kapı',
+        'desc': 'Kümes kapısının açık veya kapalı durumunu görebilirsiniz.',
+        'lottie': 'assets/lottie/door.json',
       },
       {
         'title': 'Tavuk Sayısı',
         'desc':
-            'Kümesinizdeki tavuk sayısını buradan takip edebilir, geçmiş verileri görüntüleyebilirsiniz.',
-        'icon': Icons.pets,
-        'color': Colors.red,
+            'Kümesinizdeki tavuk sayısını ve geçmişini takip edebilirsiniz.',
+        'lottie': 'assets/lottie/chicken.json',
       },
       {
         'title': 'İstatistikler',
+        'desc': 'Tüm verilerinizi grafikler halinde görüntüleyebilirsiniz.',
+        'lottie': 'assets/lottie/statistics.json',
+      },
+      {
+        'title': 'Dış Kamera',
+        'desc': 'Kümesin dışını canlı olarak izleyebilirsiniz.',
+        'lottie': 'assets/lottie/camera.json',
+      },
+      {
+        'title': 'Hava Kontrolü',
         'desc':
-            'Tüm verilerinizi grafikler halinde görüntüleyebilir, detaylı analizler yapabilirsiniz.',
-        'icon': Icons.bar_chart,
-        'color': Colors.green,
+            'Gaz sensörü ile ortam havasını ve risk seviyesini takip edebilirsiniz.',
+        'lottie': 'assets/lottie/gas_sensor.json',
       },
     ];
 
@@ -175,18 +186,18 @@ class _HomeScreenState extends State<HomeScreen> {
             });
           }
         },
-        customHeader: Container(
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: tutorials[index]['color'].withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            tutorials[index]['icon'],
-            size: 40,
-            color: tutorials[index]['color'],
-          ),
-        ),
+        customHeader: tutorials[index]['lottie2'] != null
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Lottie.asset(tutorials[index]['lottie'],
+                      width: 48, height: 48),
+                  SizedBox(height: 4),
+                  Lottie.asset(tutorials[index]['lottie2'],
+                      width: 48, height: 48),
+                ],
+              )
+            : Lottie.asset(tutorials[index]['lottie'], width: 80, height: 80),
       ).show();
     }
   }
@@ -194,258 +205,289 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final languageService = Provider.of<LanguageService>(context);
+    final themeService = Provider.of<ThemeService>(context);
     final localizations = AppLocalizations(languageService.currentLanguage);
 
-    return Theme(
-      data: ThemeData.light(),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: _isLoading
-            ? Center(child: CircularProgressIndicator())
-            : SafeArea(
-                child: Column(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : SafeArea(
+              child: Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Image.asset(
+                                "assets/images/chicken.png",
+                                width: 40,
+                                height: 40,
+                              ),
+                            ),
+                            SizedBox(width: 15),
+                            Text(
+                              "Akıllı Kümes",
+                              style: TextStyle(
+                                fontFamily: "Tektur-Regular",
+                                fontSize: 24,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.info_outline,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface),
+                              onPressed: () {
+                                _showTutorialDialog();
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.settings,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface),
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/ayarlar');
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(30.0),
+                        ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                padding: EdgeInsets.all(8),
+                                width: double.infinity,
+                                height: cameraHeight,
                                 decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Image.asset(
-                                  "assets/images/chicken.png",
-                                  width: 40,
-                                  height: 40,
-                                ),
-                              ),
-                              SizedBox(width: 15),
-                              Text(
-                                "Akıllı Kümes",
-                                style: TextStyle(
-                                  fontFamily: "Tektur-Regular",
-                                  fontSize: 24,
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.info_outline,
-                                    color: Colors.black87),
-                                onPressed: () {
-                                  _showTutorialDialog();
-                                },
-                              ),
-                              IconButton(
-                                icon:
-                                    Icon(Icons.settings, color: Colors.black87),
-                                onPressed: () {
-                                  Navigator.pushNamed(context, '/ayarlar');
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF8F9FA),
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(30.0),
-                          ),
-                        ),
-                        child: SingleChildScrollView(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  height: cameraHeight,
-                                  decoration: BoxDecoration(
-                                    color:
-                                        Theme.of(context).colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 10,
-                                        offset: Offset(0, 5),
-                                      ),
-                                    ],
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: RtspStreamView(),
-                                  ),
-                                ),
-                                SizedBox(height: 24),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  child: Text(
-                                    localizations.get('kontrol_paneli'),
-                                    style: TextStyle(
-                                      fontFamily: "Tektur-Regular",
-                                      fontSize: 22,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 16),
-                                GridView.count(
-                                  shrinkWrap: true,
-                                  physics: NeverScrollableScrollPhysics(),
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  children: [
-                                    StreamBuilder<DatabaseEvent>(
-                                      stream: _temperatureRef
-                                          .child(_todayKey)
-                                          .onValue,
-                                      builder: (context, snapshot) {
-                                        double sicaklik = 0.0;
-                                        if (snapshot.hasData &&
-                                            snapshot.data!.snapshot.value !=
-                                                null) {
-                                          final dataMap =
-                                              Map<String, dynamic>.from(snapshot
-                                                  .data!.snapshot.value as Map);
-                                          if (dataMap.isNotEmpty) {
-                                            final sortedKeys =
-                                                dataMap.keys.toList()..sort();
-                                            final lastEntry =
-                                                dataMap[sortedKeys.last] as Map;
-                                            sicaklik = (lastEntry['temperature']
-                                                        as num?)
-                                                    ?.toDouble() ??
-                                                0.0;
-                                          }
-                                        }
-                                        return _buildFeatureCard(
-                                          context,
-                                          "${localizations.get('sicaklik')}\n${sicaklik.toStringAsFixed(1)}°C",
-                                          ['assets/lottie/thermometer.json'],
-                                          Colors.orange,
-                                          localizations,
-                                          () async {
-                                            final result =
-                                                await Navigator.pushNamed(
-                                                    context, '/sicaklik');
-                                          },
-                                        );
-                                      },
-                                    ),
-                                    _buildFeatureCard(
-                                      context,
-                                      "${localizations.get('yem_su')}\nYem: %${_yemSeviyesi.toStringAsFixed(0)} | Su: %${_suSeviyesi.toStringAsFixed(0)}",
-                                      [
-                                        'assets/lottie/feed.json',
-                                        'assets/lottie/water.json'
-                                      ],
-                                      Colors.blue,
-                                      localizations,
-                                      () async {
-                                        final result =
-                                            await Navigator.pushNamed(
-                                                context, '/yem_su');
-                                        if (result == true) {
-                                          await _yemSuDegerleriniYukle();
-                                        }
-                                      },
-                                    ),
-                                    _buildFeatureCard(
-                                      context,
-                                      "${localizations.get('kayan_kapi')}\n${_kapiDurumu ? 'Açık' : 'Kapalı'}",
-                                      ['assets/lottie/door.json'],
-                                      Colors.purple,
-                                      localizations,
-                                      () async {
-                                        final result =
-                                            await Navigator.pushNamed(
-                                                context, '/kayan_kapi');
-                                        if (result == true) {
-                                          await _kapiDurumunuYukle();
-                                        }
-                                      },
-                                    ),
-                                    _buildFeatureCard(
-                                      context,
-                                      "${localizations.get('tavuk_sayisi')}\n${_tavukSayisi} adet",
-                                      ['assets/lottie/chicken.json'],
-                                      Colors.red,
-                                      localizations,
-                                      () async {
-                                        final result =
-                                            await Navigator.pushNamed(
-                                                context, '/tavuk_sayisi');
-                                        if (result == true) {
-                                          await _tavukSayisiniYukle();
-                                        }
-                                      },
-                                    ),
-                                    _buildFeatureCard(
-                                      context,
-                                      localizations.get('istatistikler'),
-                                      ['assets/lottie/statistics.json'],
-                                      Colors.green,
-                                      localizations,
-                                      () {
-                                        Navigator.pushNamed(
-                                            context, '/statistics');
-                                      },
-                                    ),
-                                    _buildFeatureCard(
-                                      context,
-                                      localizations.get('dis_kamera'),
-                                      ['assets/lottie/camera.json'],
-                                      Colors.teal,
-                                      localizations,
-                                      () {
-                                        Navigator.pushNamed(
-                                            context, '/external_camera');
-                                      },
+                                  color: Theme.of(context).colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 10,
+                                      offset: Offset(0, 5),
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: RtspStreamView(),
+                                ),
+                              ),
+                              SizedBox(height: 24),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Text(
+                                  localizations.get('kontrol_paneli'),
+                                  style: TextStyle(
+                                    fontFamily: "Tektur-Regular",
+                                    fontSize: 22,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 16),
+                              GridView.count(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                children: [
+                                  StreamBuilder<DatabaseEvent>(
+                                    stream: _temperatureRef
+                                        .child(_todayKey)
+                                        .onValue,
+                                    builder: (context, snapshot) {
+                                      double sicaklik = 0.0;
+                                      if (snapshot.hasData &&
+                                          snapshot.data!.snapshot.value !=
+                                              null) {
+                                        final dataMap =
+                                            Map<String, dynamic>.from(snapshot
+                                                .data!.snapshot.value as Map);
+                                        if (dataMap.isNotEmpty) {
+                                          final sortedKeys =
+                                              dataMap.keys.toList()..sort();
+                                          final lastEntry =
+                                              dataMap[sortedKeys.last] as Map;
+                                          sicaklik =
+                                              (lastEntry['temperature'] as num?)
+                                                      ?.toDouble() ??
+                                                  0.0;
+                                        }
+                                      }
+                                      return _buildFeatureCard(
+                                        context,
+                                        "${localizations.get('sicaklik')}\n${sicaklik.toStringAsFixed(1)}°C",
+                                        ['assets/lottie/thermometer.json'],
+                                        Colors.orange,
+                                        localizations,
+                                        () async {
+                                          final result =
+                                              await Navigator.pushNamed(
+                                                  context, '/sicaklik');
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  StreamBuilder<DatabaseEvent>(
+                                    stream: FirebaseDatabase.instance
+                                        .ref('sensor_data/$_todayKey')
+                                        .onValue,
+                                    builder: (context, snapshot) {
+                                      double yem = 0.0;
+                                      double su = 0.0;
+                                      if (snapshot.hasData &&
+                                          snapshot.data!.snapshot.value !=
+                                              null) {
+                                        final dataMap =
+                                            Map<String, dynamic>.from(snapshot
+                                                .data!.snapshot.value as Map);
+                                        if (dataMap.isNotEmpty) {
+                                          final sortedKeys =
+                                              dataMap.keys.toList()..sort();
+                                          final lastEntry =
+                                              dataMap[sortedKeys.last] as Map;
+                                          yem =
+                                              (lastEntry['yemYuzdesi'] as num?)
+                                                      ?.toDouble() ??
+                                                  0.0;
+                                          su = (lastEntry['suYuzdesi'] as num?)
+                                                  ?.toDouble() ??
+                                              0.0;
+                                        }
+                                      }
+                                      return _buildFeatureCard(
+                                        context,
+                                        "${localizations.get('yem_su')}\nYem: %${yem.toStringAsFixed(0)} | Su: %${su.toStringAsFixed(0)}",
+                                        [
+                                          'assets/lottie/feed.json',
+                                          'assets/lottie/water.json'
+                                        ],
+                                        Colors.blue,
+                                        localizations,
+                                        () async {
+                                          final result =
+                                              await Navigator.pushNamed(
+                                                  context, '/yem_su');
+                                          if (result == true) {
+                                            await _yemSuDegerleriniYukle();
+                                          }
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  _buildFeatureCard(
+                                    context,
+                                    "${localizations.get('kayan_kapi')}\n${_kapiDurumu ? 'Açık' : 'Kapalı'}",
+                                    ['assets/lottie/door.json'],
+                                    Colors.purple,
+                                    localizations,
+                                    () {
+                                      _kapiDurumunuDegistir();
+                                    },
+                                  ),
+                                  _buildFeatureCard(
+                                    context,
+                                    "${localizations.get('tavuk_sayisi')}\n${_tavukSayisi} adet",
+                                    ['assets/lottie/chicken.json'],
+                                    Colors.red,
+                                    localizations,
+                                    () async {
+                                      final result = await Navigator.pushNamed(
+                                          context, '/tavuk_sayisi');
+                                      if (result == true) {
+                                        await _tavukSayisiniYukle();
+                                      }
+                                    },
+                                  ),
+                                  _buildFeatureCard(
+                                    context,
+                                    localizations.get('istatistikler'),
+                                    ['assets/lottie/statistics.json'],
+                                    Colors.green,
+                                    localizations,
+                                    () {
+                                      Navigator.pushNamed(
+                                          context, '/statistics');
+                                    },
+                                  ),
+                                  _buildFeatureCard(
+                                    context,
+                                    localizations.get('dis_kamera'),
+                                    ['assets/lottie/camera.json'],
+                                    Colors.teal,
+                                    localizations,
+                                    () {
+                                      Navigator.pushNamed(
+                                          context, '/external_camera');
+                                    },
+                                  ),
+                                  _buildFeatureCard(
+                                    context,
+                                    'Hava Kontrolü',
+                                    ['assets/lottie/gas_sensor.json'],
+                                    Colors.brown,
+                                    localizations,
+                                    () async {
+                                      await Navigator.pushNamed(
+                                          context, '/gaz_sensoru');
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-      ),
+            ),
     );
   }
 
@@ -468,7 +510,7 @@ class _HomeScreenState extends State<HomeScreen> {
           gradient: LinearGradient(
             colors: [
               color.withOpacity(0.1),
-              Colors.white,
+              Theme.of(context).colorScheme.surface,
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
