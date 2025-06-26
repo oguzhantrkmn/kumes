@@ -4,6 +4,7 @@ import '../services/statistics_service.dart';
 import '../services/language_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:lottie/lottie.dart';
 
 class StatisticsScreen extends StatefulWidget {
   @override
@@ -150,7 +151,27 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         ),
       ),
       body: _loading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Lottie.asset(
+                    'assets/lottie/statistics.json',
+                    width: 120,
+                    height: 120,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    'Yükleniyor...',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontFamily: "Tektur-Regular",
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            )
           : Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(

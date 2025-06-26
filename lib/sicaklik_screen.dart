@@ -241,6 +241,8 @@ class _SicaklikScreenState extends State<SicaklikScreen> {
                                 fontFamily: "Tektur-Regular",
                               ),
                             ),
+                            SizedBox(height: 16),
+                            _buildSicaklikUyari(sicaklik),
                           ],
                         ),
                       );
@@ -476,6 +478,71 @@ class _SicaklikScreenState extends State<SicaklikScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSicaklikUyari(double sicaklik) {
+    String mesaj = '';
+    Color renk = Colors.green;
+    IconData ikon = Icons.check_circle;
+
+    if (sicaklik < 0) {
+      mesaj = 'Geçersiz Sıcaklık';
+      renk = Colors.grey;
+      ikon = Icons.help_outline;
+    } else if (sicaklik <= 10) {
+      mesaj = 'Tehlikeli Soğuk';
+      renk = Colors.pink;
+      ikon = Icons.dangerous;
+    } else if (sicaklik <= 17) {
+      mesaj = 'Az Tehlikeli Soğuk';
+      renk = Colors.amber;
+      ikon = Icons.warning;
+    } else if (sicaklik <= 24) {
+      mesaj = 'İdeal / Çok İyi';
+      renk = Colors.green;
+      ikon = Icons.check_box;
+    } else if (sicaklik <= 29) {
+      mesaj = 'Az Tehlikeli Sıcak';
+      renk = Colors.amber;
+      ikon = Icons.warning;
+    } else if (sicaklik <= 35) {
+      mesaj = 'Tehlikeli Sıcak';
+      renk = Colors.pink;
+      ikon = Icons.dangerous;
+    } else {
+      mesaj = 'Aşırı Tehlikeli';
+      renk = Colors.deepOrange;
+      ikon = Icons.local_fire_department;
+    }
+
+    return Container(
+      margin: EdgeInsets.only(top: 8),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: renk.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: renk, width: 2),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(ikon, color: renk, size: 28),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              mesaj,
+              style: TextStyle(
+                color: renk,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                fontFamily: "Tektur-Regular",
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

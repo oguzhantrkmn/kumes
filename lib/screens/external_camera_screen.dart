@@ -8,16 +8,24 @@ class ExternalCameraScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final languageService = Provider.of<LanguageService>(context);
     final localizations = AppLocalizations(languageService.currentLanguage);
+    final screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Kamera görüntüsü tam ekran ve döndürülmüş şekilde
+          // Kamera görüntüsü tam ekran, döndürülmüş ve siyah boşluksuz
           Positioned.fill(
-            child: RotatedBox(
-              quarterTurns: 5, // Sağa 90 derece döndür
-              child: RtspStreamView(url: 'http://192.168.0.32:8082'),
+            child: Transform.rotate(
+              angle: 1.5708, // 90 derece sağa (radyan)
+              child: OverflowBox(
+                alignment: Alignment.center,
+                minWidth: screenSize.height * 1.5,
+                maxWidth: screenSize.height * 1.8,
+                minHeight: screenSize.width * 1.5,
+                maxHeight: screenSize.width * 1.8,
+                child: RtspStreamView(url: 'rtsp://172.20.10.3:8554/unicast'),
+              ),
             ),
           ),
           // Sol üstte geri butonu

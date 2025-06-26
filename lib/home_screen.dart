@@ -211,7 +211,27 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Lottie.asset(
+                    'assets/lottie/chicken.json',
+                    width: 120,
+                    height: 120,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    'Yükleniyor...',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontFamily: "Tektur-Regular",
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            )
           : SafeArea(
               child: Column(
                 children: [
@@ -298,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: double.infinity,
                                 height: cameraHeight,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surface,
+                                  color: Colors.black,
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
@@ -310,7 +330,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(20),
-                                  child: RtspStreamView(),
+                                  child: LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      final screenSize =
+                                          MediaQuery.of(context).size;
+                                      return OverflowBox(
+                                        alignment: Alignment.center,
+                                        minWidth: screenSize.width * 1.6,
+                                        maxWidth: screenSize.width * 1.9,
+                                        minHeight: cameraHeight * 1.6,
+                                        maxHeight: cameraHeight * 1.9,
+                                        child: RtspStreamView(
+                                            url:
+                                                'rtsp://172.20.10.3:8554/unicast'),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ),
                               SizedBox(height: 24),

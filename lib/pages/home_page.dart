@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:lottie/lottie.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,7 +28,26 @@ class _HomePageState extends State<HomePage> {
             }
 
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Lottie.asset(
+                      'assets/lottie/thermometer.json',
+                      width: 80,
+                      height: 80,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Veriler Yükleniyor...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: "Tektur-Regular",
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }
 
             if (!snapshot.hasData || snapshot.data?.snapshot.value == null) {

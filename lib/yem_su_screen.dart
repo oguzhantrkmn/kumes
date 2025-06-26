@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'services/language_service.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:lottie/lottie.dart';
 
 class YemSuScreen extends StatefulWidget {
   @override
@@ -180,7 +181,38 @@ class _YemSuScreenState extends State<YemSuScreen> {
           centerTitle: true,
         ),
         body: _isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Lottie.asset(
+                          'assets/lottie/feed.json',
+                          width: 80,
+                          height: 80,
+                        ),
+                        SizedBox(width: 20),
+                        Lottie.asset(
+                          'assets/lottie/water.json',
+                          width: 80,
+                          height: 80,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Yükleniyor...',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontFamily: "Tektur-Regular",
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              )
             : SingleChildScrollView(
                 padding: EdgeInsets.all(16),
                 child: Column(

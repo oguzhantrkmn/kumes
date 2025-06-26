@@ -1,67 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:typed_data';
-import 'dart:async';
+import 'package:lottie/lottie.dart';
+import 'package:flutter_vlc_player/flutter_vlc_player.dart';
 
 class RtspStreamView extends StatefulWidget {
   final String url;
-  const RtspStreamView({super.key, this.url = 'http://192.168.0.32:8081'});
+  const RtspStreamView(
+      {super.key, this.url = 'rtsp://172.20.10.3:8554/unicast'});
 
   @override
   State<RtspStreamView> createState() => _RtspStreamViewState();
 }
 
 class _RtspStreamViewState extends State<RtspStreamView> {
-  late http.Client _client;
-  StreamController<Uint8List>? _streamController;
+  late VlcPlayerController _videoPlayerController;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _client = http.Client();
-    _streamController = StreamController<Uint8List>();
-    _startStream();
+    _initializeVlcPlayer();
   }
 
-  void _startStream() async {
-    try {
-      final request = http.Request('GET', Uri.parse(widget.url));
-      final response = await _client.send(request);
+  void _initializeVlcPlayer() {
+    _videoPlayerController = VlcPlayerController.network(
+      widget.url,
+      autoPlay: true,
+    );
 
-      List<int> bytes = [];
-      bool inImage = false;
-
-      await for (var chunk in response.stream) {
-        for (var byte in chunk) {
-          if (!inImage) {
-            // JPEG başlangıcı
-            if (byte == 0xFF) inImage = true;
-            bytes = [byte];
-          } else {
-            bytes.add(byte);
-            // JPEG bitişi
-            if (bytes.length > 2 &&
-                bytes[bytes.length - 2] == 0xFF &&
-                bytes[bytes.length - 1] == 0xD9) {
-              // Sadece en son kareyi göster
-              if (_streamController?.isClosed == false) {
-                _streamController?.add(Uint8List.fromList(bytes));
-              }
-              inImage = false;
-              bytes = [];
-            }
-          }
-        }
+    // Yükleme durumunu kontrol et
+    Future.delayed(Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
-    } catch (e) {
-      _streamController?.addError(e);
-    }
+    });
   }
 
   @override
   void dispose() {
-    _client.close();
-    _streamController?.close();
+    _videoPlayerController.dispose();
     super.dispose();
   }
 
@@ -69,23 +47,71 @@ class _RtspStreamViewState extends State<RtspStreamView> {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
-      child: StreamBuilder<Uint8List>(
-        stream: _streamController?.stream,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return Image.memory(
-              snapshot.data!,
-              fit: BoxFit.cover, // Tüm çerçeveyi doldur
-              gaplessPlayback: true,
-              width: double.infinity,
-              height: double.infinity,
-            );
-          } else if (snapshot.hasError) {
-            return const Center(child: Icon(Icons.error));
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
+      child: Stack(
+        children: [
+          VlcPlayer(
+            controller: _videoPlayerController,
+            aspectRatio: 16 / 9,
+            placeholder: Container(
+              color: Colors.black,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Lottie.asset(
+                      'assets/lottie/camera.json',
+                      width: 80,
+                      height: 80,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'RTSP Stream Bağlanıyor...',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: "Tektur-Regular",
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.8),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Lottie.asset(
+                      'assets/lottie/camera.json',
+                      width: 80,
+                      height: 80,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'RTSP Stream Yükleniyor...',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: "Tektur-Regular",
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'VLC Player ile bağlanıyor',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: "Tektur-Regular",
+                        color: Colors.grey[400],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

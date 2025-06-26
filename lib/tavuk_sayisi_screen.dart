@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/language_service.dart';
+import 'package:lottie/lottie.dart';
 
 class TavukSayisiScreen extends StatefulWidget {
   @override
@@ -57,7 +58,27 @@ class _TavukSayisiScreenState extends State<TavukSayisiScreen> {
           centerTitle: true,
         ),
         body: _isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Lottie.asset(
+                      'assets/lottie/chicken.json',
+                      width: 120,
+                      height: 120,
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Yükleniyor...',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontFamily: "Tektur-Regular",
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              )
             : SingleChildScrollView(
                 padding: EdgeInsets.all(16),
                 child: Column(

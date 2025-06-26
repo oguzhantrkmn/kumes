@@ -81,7 +81,27 @@ class _GazKontrolScreenState extends State<GazKontrolScreen> {
         centerTitle: true,
       ),
       body: _loading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Lottie.asset(
+                    'assets/lottie/gas_sensor.json',
+                    width: 120,
+                    height: 120,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    'Yükleniyor...',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontFamily: "Tektur-Regular",
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            )
           : SingleChildScrollView(
               padding: EdgeInsets.all(16),
               child: Column(
