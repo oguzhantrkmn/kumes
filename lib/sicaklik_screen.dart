@@ -189,6 +189,7 @@ class _SicaklikScreenState extends State<SicaklikScreen> {
                     stream: _temperatureRef.child(_todayKey).onValue,
                     builder: (context, snapshot) {
                       double sicaklik = 0.0;
+                      double nem = 0.0;
                       if (snapshot.hasData &&
                           snapshot.data!.snapshot.value != null) {
                         final dataMap = Map<String, dynamic>.from(
@@ -199,6 +200,8 @@ class _SicaklikScreenState extends State<SicaklikScreen> {
                           sicaklik =
                               (lastEntry['temperature'] as num?)?.toDouble() ??
                                   0.0;
+                          nem = (lastEntry['humidity'] as num?)?.toDouble() ??
+                              0.0;
                         }
                       }
                       return Container(
@@ -230,6 +233,16 @@ class _SicaklikScreenState extends State<SicaklikScreen> {
                                 fontWeight: FontWeight.bold,
                                 fontFamily: "Tektur-Regular",
                                 color: Colors.orange,
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              'Nem: ${nem.toStringAsFixed(0)}%',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                                fontFamily: "Tektur-Regular",
                               ),
                             ),
                             SizedBox(height: 10),

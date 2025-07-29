@@ -141,15 +141,9 @@ class _HomeScreenState extends State<HomeScreen> {
         'lottie2': 'assets/lottie/water.json',
       },
       {
-        'title': 'Kayan Kapı',
+        'title': 'Otomatik Kapı',
         'desc': 'Kümes kapısının açık veya kapalı durumunu görebilirsiniz.',
         'lottie': 'assets/lottie/door.json',
-      },
-      {
-        'title': 'Tavuk Sayısı',
-        'desc':
-            'Kümesinizdeki tavuk sayısını ve geçmişini takip edebilirsiniz.',
-        'lottie': 'assets/lottie/chicken.json',
       },
       {
         'title': 'İstatistikler',
@@ -457,26 +451,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   _buildFeatureCard(
                                     context,
-                                    "${localizations.get('kayan_kapi')}\n${_kapiDurumu ? 'Açık' : 'Kapalı'}",
+                                    "Otomatik Kapı\n${_kapiDurumu ? 'Açık' : 'Kapalı'}",
                                     ['assets/lottie/door.json'],
                                     Colors.purple,
                                     localizations,
                                     () {
                                       _kapiDurumunuDegistir();
-                                    },
-                                  ),
-                                  _buildFeatureCard(
-                                    context,
-                                    "${localizations.get('tavuk_sayisi')}\n${_tavukSayisi} adet",
-                                    ['assets/lottie/chicken.json'],
-                                    Colors.red,
-                                    localizations,
-                                    () async {
-                                      final result = await Navigator.pushNamed(
-                                          context, '/tavuk_sayisi');
-                                      if (result == true) {
-                                        await _tavukSayisiniYukle();
-                                      }
                                     },
                                   ),
                                   _buildFeatureCard(
